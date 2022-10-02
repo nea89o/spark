@@ -21,7 +21,7 @@
 package me.lucko.spark.forge;
 
 import me.lucko.spark.common.command.sender.AbstractCommandSender;
-import me.lucko.spark.forge.plugin.Forge1710SparkPlugin;
+import me.lucko.spark.forge.plugin.Forge189SparkPlugin;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
@@ -35,10 +35,10 @@ import net.minecraftforge.common.ForgeHooks;
 
 import java.util.UUID;
 
-public class Forge1710CommandSender extends AbstractCommandSender<ICommandSender> {
-    private final Forge1710SparkPlugin plugin;
+public class Forge189CommandSender extends AbstractCommandSender<ICommandSender> {
+    private final Forge189SparkPlugin plugin;
 
-    public Forge1710CommandSender(ICommandSender source, Forge1710SparkPlugin plugin) {
+    public Forge189CommandSender(ICommandSender source, Forge189SparkPlugin plugin) {
         super(source);
         this.plugin = plugin;
     }

@@ -20,16 +20,19 @@
 
 package me.lucko.spark.forge.plugin;
 
-import cpw.mods.fml.common.FMLCommonHandler;
+import com.google.common.collect.Lists;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
-import me.lucko.spark.forge.Forge1710CommandSender;
-import me.lucko.spark.forge.Forge1710SparkMod;
+import me.lucko.spark.forge.Forge189CommandSender;
+import me.lucko.spark.forge.Forge189SparkMod;
 import net.minecraft.command.ICommand;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.util.BlockPos;
+import net.minecraftforge.fml.common.FMLCommonHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
 import java.util.Collections;
@@ -38,14 +41,14 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.logging.Level;
 
-public abstract class Forge1710SparkPlugin implements SparkPlugin, ICommand {
+public abstract class Forge189SparkPlugin implements SparkPlugin, ICommand {
 
-    private final Forge1710SparkMod mod;
+    private final Forge189SparkMod mod;
     private final Logger logger;
     protected final ScheduledExecutorService scheduler;
     protected final SparkPlatform platform;
 
-    protected Forge1710SparkPlugin(Forge1710SparkMod mod) {
+    protected Forge189SparkPlugin(Forge189SparkMod mod) {
         this.mod = mod;
         this.logger = LogManager.getLogger("spark");
         this.scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
@@ -100,7 +103,7 @@ public abstract class Forge1710SparkPlugin implements SparkPlugin, ICommand {
 
     @Override
     public String getCommandName() {
-        return getCommandName();
+        return "sparkc";
     }
 
     @Override
@@ -108,24 +111,26 @@ public abstract class Forge1710SparkPlugin implements SparkPlugin, ICommand {
         return "/" + getCommandName();
     }
 
+    private final List<String> aliases = Lists.newArrayList("sparkc", "sparkclient");
+
     @Override
     public List<String> getCommandAliases() {
-        return Collections.singletonList(getCommandName());
+        return aliases;
     }
 
     @Override
     public void processCommand(ICommandSender sender, String[] args) {
-        this.platform.executeCommand(new Forge1710CommandSender(sender, this), args);
+        this.platform.executeCommand(new Forge189CommandSender(sender, this), args);
     }
 
     @Override
-    public List<String> addTabCompletionOptions(ICommandSender sender, String[] args) {
-        return this.platform.tabCompleteCommand(new Forge1710CommandSender(sender, this), args);
+    public List<String> addTabCompletionOptions(ICommandSender sender, String[] args, BlockPos pos) {
+        return this.platform.tabCompleteCommand(new Forge189CommandSender(sender, this), args);
     }
 
     @Override
     public boolean canCommandSenderUseCommand(ICommandSender sender) {
-        return this.platform.hasPermissionForAnyCommand(new Forge1710CommandSender(sender, this));
+        return this.platform.hasPermissionForAnyCommand(new Forge189CommandSender(sender, this));
     }
 
     @Override
@@ -134,10 +139,10 @@ public abstract class Forge1710SparkPlugin implements SparkPlugin, ICommand {
     }
 
     @Override
-    public int compareTo(Object o) {
-        return getCommandName().compareTo(((ICommand)o).getCommandName());
+    public int compareTo(@NotNull ICommand o) {
+        return getCommandName().compareTo(o.getCommandName());
     }
-    
+
     protected boolean isOp(EntityPlayer player) {
        return FMLCommonHandler.instance().getMinecraftServerInstance().getConfigurationManager().canSendCommands(player.getGameProfile());
     }

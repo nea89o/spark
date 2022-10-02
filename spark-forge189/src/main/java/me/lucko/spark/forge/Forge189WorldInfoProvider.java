@@ -20,9 +20,6 @@
 
 package me.lucko.spark.forge;
 
-import cpw.mods.fml.relauncher.ReflectionHelper;
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
 import me.lucko.spark.common.platform.world.AbstractChunkInfo;
 import me.lucko.spark.common.platform.world.CountMap;
 import me.lucko.spark.common.platform.world.WorldInfoProvider;
@@ -33,16 +30,20 @@ import net.minecraft.client.multiplayer.WorldClient;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.ClassInheritanceMultiMap;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.IChunkProvider;
+import net.minecraftforge.fml.relauncher.ReflectionHelper;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-public abstract class Forge1710WorldInfoProvider implements WorldInfoProvider {
-    public static final class Server extends Forge1710WorldInfoProvider {
+public abstract class Forge189WorldInfoProvider implements WorldInfoProvider {
+    public static final class Server extends Forge189WorldInfoProvider {
         private final MinecraftServer server;
 
         public Server(MinecraftServer server) {
@@ -80,7 +81,7 @@ public abstract class Forge1710WorldInfoProvider implements WorldInfoProvider {
     }
 
     @SideOnly(Side.CLIENT)
-    public static final class Client extends Forge1710WorldInfoProvider {
+    public static final class Client extends Forge189WorldInfoProvider {
         private final Minecraft client;
 
         public Client(Minecraft client) {
@@ -128,7 +129,7 @@ public abstract class Forge1710WorldInfoProvider implements WorldInfoProvider {
             super(chunk.xPosition, chunk.zPosition);
 
             this.entityCounts = new CountMap.Simple<>(new HashMap<>());
-            for(List<Entity> entityList : chunk.entityLists) {
+            for(ClassInheritanceMultiMap<Entity> entityList : chunk.getEntityLists()) {
                 entityList.forEach(entity -> {
                     this.entityCounts.increment(entity.getClass());
                 });

@@ -20,7 +20,6 @@
 
 package me.lucko.spark.forge.plugin;
 
-import cpw.mods.fml.common.gameevent.TickEvent;
 import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.platform.world.WorldInfoProvider;
 import me.lucko.spark.common.sampler.ThreadDumper;
@@ -31,13 +30,15 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.command.ICommandSender;
 import net.minecraftforge.client.ClientCommandHandler;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.fml.common.gameevent.TickEvent;
+import net.minecraftforge.fml.relauncher.ReflectionHelper;
 
 import java.util.stream.Stream;
 
-public class Forge1710ClientSparkPlugin extends Forge1710SparkPlugin {
+public class Forge189ClientSparkPlugin extends Forge189SparkPlugin {
 
-    public static void register(Forge1710SparkMod mod) {
-        Forge1710ClientSparkPlugin plugin = new Forge1710ClientSparkPlugin(mod, Minecraft.getMinecraft());
+    public static void register(Forge189SparkMod mod) {
+        Forge189ClientSparkPlugin plugin = new Forge189ClientSparkPlugin(mod, Minecraft.getMinecraft());
         plugin.enable();
 
         // register listeners
@@ -50,10 +51,10 @@ public class Forge1710ClientSparkPlugin extends Forge1710SparkPlugin {
     private final Minecraft minecraft;
     private final ThreadDumper gameThreadDumper;
 
-    public Forge1710ClientSparkPlugin(Forge1710SparkMod mod, Minecraft minecraft) {
+    public Forge189ClientSparkPlugin(Forge189SparkMod mod, Minecraft minecraft) {
         super(mod);
         this.minecraft = minecraft;
-        this.gameThreadDumper = new ThreadDumper.Specific(minecraft.mcThread);
+        this.gameThreadDumper = new ThreadDumper.Specific((Thread) ReflectionHelper.getPrivateValue(Minecraft.class, minecraft, "mcThread", "field_152352_aC", "aO"));
     }
 
     @Override
@@ -67,23 +68,23 @@ public class Forge1710ClientSparkPlugin extends Forge1710SparkPlugin {
     }
 
     @Override
-    public Stream<Forge1710CommandSender> getCommandSenders() {
-        return Stream.of(new Forge1710CommandSender(this.minecraft.thePlayer, this));
+    public Stream<Forge189CommandSender> getCommandSenders() {
+        return Stream.of(new Forge189CommandSender(this.minecraft.thePlayer, this));
     }
 
     @Override
     public TickHook createTickHook() {
-        return new Forge1710TickHook(TickEvent.Type.CLIENT);
+        return new Forge189TickHook(TickEvent.Type.CLIENT);
     }
 
     @Override
     public TickReporter createTickReporter() {
-        return new Forge1710TickReporter(TickEvent.Type.CLIENT);
+        return new Forge189TickReporter(TickEvent.Type.CLIENT);
     }
 
     @Override
     public WorldInfoProvider createWorldInfoProvider() {
-        return new Forge1710WorldInfoProvider.Client(Minecraft.getMinecraft());
+        return new Forge189WorldInfoProvider.Client(Minecraft.getMinecraft());
     }
 
     @Override
@@ -93,7 +94,7 @@ public class Forge1710ClientSparkPlugin extends Forge1710SparkPlugin {
 
     @Override
     public PlatformInfo getPlatformInfo() {
-        return new Forge1710PlatformInfo(PlatformInfo.Type.CLIENT);
+        return new Forge189PlatformInfo(PlatformInfo.Type.CLIENT);
     }
 
     @Override

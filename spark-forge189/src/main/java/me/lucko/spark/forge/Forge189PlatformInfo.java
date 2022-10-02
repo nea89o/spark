@@ -20,40 +20,33 @@
 
 package me.lucko.spark.forge;
 
-import cpw.mods.fml.common.FMLCommonHandler;
-import cpw.mods.fml.common.eventhandler.SubscribeEvent;
-import cpw.mods.fml.common.gameevent.TickEvent;
-import me.lucko.spark.common.tick.AbstractTickHook;
-import me.lucko.spark.common.tick.TickHook;
+import me.lucko.spark.common.platform.PlatformInfo;
+import net.minecraftforge.common.ForgeVersion;
 
-public class Forge1710TickHook extends AbstractTickHook implements TickHook {
-    private final TickEvent.Type type;
+public class Forge189PlatformInfo implements PlatformInfo {
+    private final Type type;
 
-    public Forge1710TickHook(TickEvent.Type type) {
+    public Forge189PlatformInfo(Type type) {
         this.type = type;
     }
 
-    @SubscribeEvent
-    public void onTick(TickEvent e) {
-        if (e.phase != TickEvent.Phase.START) {
-            return;
-        }
-
-        if (e.type != this.type) {
-            return;
-        }
-
-        onTick();
+    @Override
+    public Type getType() {
+        return this.type;
     }
 
     @Override
-    public void start() {
-        FMLCommonHandler.instance().bus().register(this);
+    public String getName() {
+        return "Forge";
     }
 
     @Override
-    public void close() {
-        FMLCommonHandler.instance().bus().unregister(this);
+    public String getVersion() {
+        return ForgeVersion.getVersion();
     }
 
+    @Override
+    public String getMinecraftVersion() {
+        return "1.8.9";
+    }
 }

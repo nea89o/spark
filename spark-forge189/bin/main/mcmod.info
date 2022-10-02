@@ -3,5 +3,6 @@
   "name": "spark",
   "description": "${pluginDescription}",
   "version": "${pluginVersion}",
-  "authors": ["Luck"]
+  "authors": ["Luck"],
+  "mcversion": "1.8.9"
 }]

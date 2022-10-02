@@ -21,10 +21,6 @@
 package me.lucko.spark.forge.plugin;
 
 import com.google.common.collect.Queues;
-import cpw.mods.fml.common.FMLCommonHandler;
-import cpw.mods.fml.common.event.FMLServerStartingEvent;
-import cpw.mods.fml.common.eventhandler.SubscribeEvent;
-import cpw.mods.fml.common.gameevent.TickEvent;
 import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.platform.world.WorldInfoProvider;
 import me.lucko.spark.common.sampler.ThreadDumper;
@@ -32,21 +28,23 @@ import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.tick.TickReporter;
 import me.lucko.spark.forge.*;
 import net.minecraft.command.ICommandSender;
-import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.server.MinecraftServer;
+import net.minecraftforge.fml.common.FMLCommonHandler;
+import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.gameevent.TickEvent;
 
-import java.util.List;
 import java.util.Queue;
 import java.util.stream.Stream;
 
-public class Forge1710ServerSparkPlugin extends Forge1710SparkPlugin {
+public class Forge189ServerSparkPlugin extends Forge189SparkPlugin {
     private final Queue<Runnable> scheduledServerTasks = Queues.newArrayDeque();
 
     private final ThreadDumper.GameThread gameThreadDumper;
 
-    public static Forge1710ServerSparkPlugin register(Forge1710SparkMod mod, FMLServerStartingEvent event) {
-        Forge1710ServerSparkPlugin plugin = new Forge1710ServerSparkPlugin(mod, event.getServer());
+    public static Forge189ServerSparkPlugin register(Forge189SparkMod mod, FMLServerStartingEvent event) {
+        Forge189ServerSparkPlugin plugin = new Forge189ServerSparkPlugin(mod, event.getServer());
         plugin.enable();
 
         FMLCommonHandler.instance().bus().register(plugin);
@@ -77,7 +75,7 @@ public class Forge1710ServerSparkPlugin extends Forge1710SparkPlugin {
 
     private final MinecraftServer server;
 
-    public Forge1710ServerSparkPlugin(Forge1710SparkMod mod, MinecraftServer server) {
+    public Forge189ServerSparkPlugin(Forge189SparkMod mod, MinecraftServer server) {
         super(mod);
         this.server = server;
         this.gameThreadDumper = new ThreadDumper.GameThread();
@@ -108,26 +106,26 @@ public class Forge1710ServerSparkPlugin extends Forge1710SparkPlugin {
     }
 
     @Override
-    public Stream<Forge1710CommandSender> getCommandSenders() {
+    public Stream<Forge189CommandSender> getCommandSenders() {
         return Stream.concat(
-                ((List<EntityPlayer>)this.server.getConfigurationManager().playerEntityList).stream(),
+            this.server.getConfigurationManager().playerEntityList.stream(),
             Stream.of(this.server)
-        ).map(sender -> new Forge1710CommandSender(sender, this));
+        ).map(sender -> new Forge189CommandSender(sender, this));
     }
 
     @Override
     public TickHook createTickHook() {
-        return new Forge1710TickHook(TickEvent.Type.SERVER);
+        return new Forge189TickHook(TickEvent.Type.SERVER);
     }
 
     @Override
     public TickReporter createTickReporter() {
-        return new Forge1710TickReporter(TickEvent.Type.SERVER);
+        return new Forge189TickReporter(TickEvent.Type.SERVER);
     }
 
     @Override
     public WorldInfoProvider createWorldInfoProvider() {
-        return new Forge1710WorldInfoProvider.Server(FMLCommonHandler.instance().getMinecraftServerInstance());
+        return new Forge189WorldInfoProvider.Server(FMLCommonHandler.instance().getMinecraftServerInstance());
     }
 
     @Override
@@ -139,7 +137,7 @@ public class Forge1710ServerSparkPlugin extends Forge1710SparkPlugin {
 
     @Override
     public PlatformInfo getPlatformInfo() {
-        return new Forge1710PlatformInfo(PlatformInfo.Type.SERVER);
+        return new Forge189PlatformInfo(PlatformInfo.Type.SERVER);
     }
 
     @Override

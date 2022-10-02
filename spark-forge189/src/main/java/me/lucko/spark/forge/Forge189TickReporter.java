@@ -20,16 +20,16 @@
 
 package me.lucko.spark.forge;
 
-import cpw.mods.fml.common.FMLCommonHandler;
-import cpw.mods.fml.common.eventhandler.SubscribeEvent;
-import cpw.mods.fml.common.gameevent.TickEvent;
 import me.lucko.spark.common.tick.SimpleTickReporter;
 import me.lucko.spark.common.tick.TickReporter;
+import net.minecraftforge.fml.common.FMLCommonHandler;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.gameevent.TickEvent;
 
-public class Forge1710TickReporter extends SimpleTickReporter implements TickReporter {
+public class Forge189TickReporter extends SimpleTickReporter implements TickReporter {
     private final TickEvent.Type type;
 
-    public Forge1710TickReporter(TickEvent.Type type) {
+    public Forge189TickReporter(TickEvent.Type type) {
         this.type = type;
     }
 

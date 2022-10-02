@@ -20,16 +20,15 @@
 
 package me.lucko.spark.forge;
 
-import cpw.mods.fml.common.FMLCommonHandler;
-import cpw.mods.fml.common.Mod;
-import cpw.mods.fml.common.Mod.EventHandler;
-import cpw.mods.fml.common.event.FMLInitializationEvent;
-import cpw.mods.fml.common.event.FMLPreInitializationEvent;
-import cpw.mods.fml.common.event.FMLServerStartingEvent;
-import cpw.mods.fml.common.event.FMLServerStoppingEvent;
-import cpw.mods.fml.relauncher.Side;
-import me.lucko.spark.forge.plugin.Forge1710ClientSparkPlugin;
-import me.lucko.spark.forge.plugin.Forge1710ServerSparkPlugin;
+import me.lucko.spark.forge.plugin.Forge189ClientSparkPlugin;
+import me.lucko.spark.forge.plugin.Forge189ServerSparkPlugin;
+import net.minecraftforge.fml.common.FMLCommonHandler;
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.common.event.FMLInitializationEvent;
+import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
+import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
+import net.minecraftforge.fml.common.event.FMLServerStoppingEvent;
+import net.minecraftforge.fml.relauncher.Side;
 
 import java.nio.file.Path;
 
@@ -39,33 +38,33 @@ import java.nio.file.Path;
         version = "@version@",
         acceptableRemoteVersions = "*"
 )
-public class Forge1710SparkMod {
+public class Forge189SparkMod {
 
     private Path configDirectory;
-    private Forge1710ServerSparkPlugin activeServerPlugin;
+    private Forge189ServerSparkPlugin activeServerPlugin;
 
     public String getVersion() {
-        return Forge1710SparkMod.class.getAnnotation(Mod.class).version();
+        return Forge189SparkMod.class.getAnnotation(Mod.class).version();
     }
 
-    @EventHandler
+    @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent e) {
         this.configDirectory = e.getModConfigurationDirectory().toPath();
     }
 
-    @EventHandler
+    @Mod.EventHandler
     public void clientInit(FMLInitializationEvent e) {
         if (FMLCommonHandler.instance().getSide() == Side.CLIENT) {
-            Forge1710ClientSparkPlugin.register(this);
+            Forge189ClientSparkPlugin.register(this);
         }
     }
 
-    @EventHandler
+    @Mod.EventHandler
     public void serverInit(FMLServerStartingEvent e) {
-        this.activeServerPlugin = Forge1710ServerSparkPlugin.register(this, e);
+        this.activeServerPlugin = Forge189ServerSparkPlugin.register(this, e);
     }
 
-    @EventHandler
+    @Mod.EventHandler
     public void serverStop(FMLServerStoppingEvent e) {
         if (this.activeServerPlugin != null) {
             this.activeServerPlugin.disable();

@@ -20,33 +20,40 @@
 
 package me.lucko.spark.forge;
 
-import me.lucko.spark.common.platform.PlatformInfo;
-import net.minecraftforge.common.ForgeVersion;
+import me.lucko.spark.common.tick.AbstractTickHook;
+import me.lucko.spark.common.tick.TickHook;
+import net.minecraftforge.fml.common.FMLCommonHandler;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.gameevent.TickEvent;
 
-public class Forge1710PlatformInfo implements PlatformInfo {
-    private final Type type;
+public class Forge189TickHook extends AbstractTickHook implements TickHook {
+    private final TickEvent.Type type;
 
-    public Forge1710PlatformInfo(Type type) {
+    public Forge189TickHook(TickEvent.Type type) {
         this.type = type;
     }
 
-    @Override
-    public Type getType() {
-        return this.type;
+    @SubscribeEvent
+    public void onTick(TickEvent e) {
+        if (e.phase != TickEvent.Phase.START) {
+            return;
+        }
+
+        if (e.type != this.type) {
+            return;
+        }
+
+        onTick();
     }
 
     @Override
-    public String getName() {
-        return "Forge";
+    public void start() {
+        FMLCommonHandler.instance().bus().register(this);
     }
 
     @Override
-    public String getVersion() {
-        return ForgeVersion.getVersion();
+    public void close() {
+        FMLCommonHandler.instance().bus().unregister(this);
     }
 
-    @Override
-    public String getMinecraftVersion() {
-        return "1.7.10";
-    }
 }

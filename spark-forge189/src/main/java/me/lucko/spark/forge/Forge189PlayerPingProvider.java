@@ -30,10 +30,10 @@ import net.minecraft.server.MinecraftServer;
 import java.util.List;
 import java.util.Map;
 
-public class Forge1710PlayerPingProvider implements PlayerPingProvider {
+public class Forge189PlayerPingProvider implements PlayerPingProvider {
     private final MinecraftServer server;
 
-    public Forge1710PlayerPingProvider(MinecraftServer server) {
+    public Forge189PlayerPingProvider(MinecraftServer server) {
         this.server = server;
     }
 
