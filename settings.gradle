@@ -26,6 +26,5 @@ rootProject.name = 'spark'
 include (
         'spark-api',
         'spark-common',
-        'spark-forge1710',
         'spark-forge189'
 )

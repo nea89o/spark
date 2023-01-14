@@ -1,2 +1,4 @@
-before_install:
-  - ./gradlew :spark-forge1710:setupCIWorkspace
+jdk:
+  - openjdk17
+env:
+  CI: true

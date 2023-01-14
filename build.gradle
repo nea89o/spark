@@ -54,6 +54,7 @@ def determinePatchVersion() {
     exec {
         commandLine 'git', 'describe', '--tags'
         standardOutput = tagInfo
+        ignoreExitValue = true
     }
     tagInfo = tagInfo.toString()
 
