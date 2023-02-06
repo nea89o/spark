@@ -103,6 +103,9 @@ publishing {
             version = project.version
 
             artifact(tasks.shadowJar) {
+                classifier = "devmod"
+            }
+            artifact(tasks.remapJar) {
                 classifier = "mod"
             }
         }
