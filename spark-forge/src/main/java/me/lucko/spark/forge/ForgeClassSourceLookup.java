@@ -20,17 +20,31 @@
 
 package me.lucko.spark.forge;
 
-import cpw.mods.modlauncher.TransformingClassLoader;
 import me.lucko.spark.common.sampler.source.ClassSourceLookup;
+import net.minecraftforge.fml.common.Loader;
+import net.minecraftforge.fml.common.ModContainer;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class ForgeClassSourceLookup implements ClassSourceLookup {
 
+	Map<String, ModContainer> packageLUT = new HashMap<>();
+
+	public ForgeClassSourceLookup() {
+		for (ModContainer modContainer : Loader.instance().getModList()) {
+			for (String ownedPackage : modContainer.getOwnedPackages()) {
+				packageLUT.put(ownedPackage, modContainer);
+			}
+		}
+	}
+
     @Override
     public String identify(Class<?> clazz) {
-        if (clazz.getClassLoader() instanceof TransformingClassLoader) {
-            String name = clazz.getModule().getName();
-            return name.equals("forge") || name.equals("minecraft") ? null : name;
-        }
-        return null;
+		ModContainer modContainer = packageLUT.get(clazz.getPackage().getName());
+		String modId = modContainer != null ? modContainer.getModId() : null;
+		if ("forge".equals(modId) || "minecraft".equals(modId) || "fml".equals(modId))
+			return null;
+		return modId;
     }
 }

@@ -23,49 +23,34 @@ package me.lucko.spark.forge;
 import me.lucko.spark.common.command.sender.AbstractCommandSender;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
-import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.core.RegistryAccess;
-import net.minecraft.network.chat.Component.Serializer;
-import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.world.entity.Entity;
+import net.minecraft.client.entity.EntityPlayerSP;
+import net.minecraft.util.IChatComponent;
 
-import java.util.Objects;
 import java.util.UUID;
 
-public class ForgeClientCommandSender extends AbstractCommandSender<CommandSourceStack> {
-    public ForgeClientCommandSender(CommandSourceStack source) {
-        super(source);
-    }
+public class ForgeClientCommandSender extends AbstractCommandSender<EntityPlayerSP> {
+	public ForgeClientCommandSender(EntityPlayerSP source) {
+		super(source);
+	}
 
-    @Override
-    public String getName() {
-        return this.delegate.getTextName();
-    }
+	@Override
+	public String getName() {
+		return delegate.getName();
+	}
 
-    @Override
-    public UUID getUniqueId() {
-        Entity entity = this.delegate.getEntity();
-        if (entity instanceof LocalPlayer player) {
-            return player.getUUID();
-        }
-        return null;
-    }
+	@Override
+	public UUID getUniqueId() {
+		return delegate.getUniqueID();
+	}
 
-    @Override
-    public void sendMessage(Component message) {
-        MutableComponent component = Serializer.fromJson(GsonComponentSerializer.gson().serializeToTree(message), RegistryAccess.EMPTY);
-        Objects.requireNonNull(component, "component");
-        super.delegate.sendSystemMessage(component);
-    }
+	@Override
+	public void sendMessage(Component message) {
+		IChatComponent component = IChatComponent.Serializer.jsonToComponent(GsonComponentSerializer.gson().serialize(message));
+		delegate.addChatMessage(component);
+	}
 
-    @Override
-    public boolean hasPermission(String permission) {
-        return true;
-    }
-
-    @Override
-    protected Object getObjectForComparison() {
-        return this.delegate.getEntity();
-    }
+	@Override
+	public boolean hasPermission(String permission) {
+		return true;
+	}
 }

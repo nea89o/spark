@@ -20,40 +20,22 @@
 
 package me.lucko.spark.forge;
 
-import me.lucko.spark.common.platform.PlatformInfo;
-import net.minecraftforge.common.ForgeVersion;
 import net.minecraftforge.fml.common.FMLCommonHandler;
-import net.minecraftforge.fml.common.Loader;
 
-public class ForgePlatformInfo implements PlatformInfo {
-    private final Type type;
+import java.util.function.Supplier;
 
-    public ForgePlatformInfo(Type type) {
-        this.type = type;
-    }
+public class SidedExecutor {
+	public static <T> T executeIf(
+		Supplier<? extends Supplier<? extends T>> onClient,
+		Supplier<? extends Supplier<? extends T>> onServer
+	) {
+		switch (FMLCommonHandler.instance().getSide()) {
+			case CLIENT:
+				return onClient.get().get();
+			case SERVER:
+				return onServer.get().get();
+		}
+		throw new AssertionError();
+	}
 
-    @Override
-    public Type getType() {
-        return this.type;
-    }
-
-    @Override
-    public String getName() {
-        return "Forge";
-    }
-
-    @Override
-    public String getBrand() {
-        return FMLCommonHandler.instance().getModName();
-    }
-
-    @Override
-    public String getVersion() {
-        return ForgeVersion.getVersion();
-    }
-
-    @Override
-    public String getMinecraftVersion() {
-        return Loader.instance().getMinecraftModContainer().getVersion();
-    }
 }

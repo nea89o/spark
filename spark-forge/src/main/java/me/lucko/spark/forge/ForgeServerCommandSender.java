@@ -21,63 +21,57 @@
 package me.lucko.spark.forge;
 
 import me.lucko.spark.common.command.sender.AbstractCommandSender;
-import me.lucko.spark.forge.plugin.ForgeServerSparkPlugin;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
-import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.core.RegistryAccess;
-import net.minecraft.network.chat.Component.Serializer;
-import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.world.entity.Entity;
+import net.minecraft.command.ICommandSender;
+import net.minecraft.entity.Entity;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.IChatComponent;
 
-import java.util.Objects;
 import java.util.UUID;
 
-public class ForgeServerCommandSender extends AbstractCommandSender<CommandSourceStack> {
-    private final ForgeServerSparkPlugin plugin;
+public class ForgeServerCommandSender extends AbstractCommandSender<ICommandSender> {
 
-    public ForgeServerCommandSender(CommandSourceStack commandSource, ForgeServerSparkPlugin plugin) {
-        super(commandSource);
-        this.plugin = plugin;
-    }
+	public ForgeServerCommandSender(ICommandSender commandSource) {
+		super(commandSource);
+	}
 
-    @Override
-    public String getName() {
-        String name = this.delegate.getTextName();
-        if (this.delegate.getEntity() != null && name.equals("Server")) {
-            return "Console";
-        }
-        return name;
-    }
+	@Override
+	public String getName() {
+		String name = this.delegate.getName();
+		if (delegate instanceof MinecraftServer) {
+			return "Console";
+		}
+		return name;
+	}
 
-    @Override
-    public UUID getUniqueId() {
-        Entity entity = this.delegate.getEntity();
-        return entity != null ? entity.getUUID() : null;
-    }
+	@Override
+	public UUID getUniqueId() {
+		Entity entity = this.delegate.getCommandSenderEntity();
+		return entity != null ? entity.getUniqueID() : null;
+	}
 
-    @Override
-    public void sendMessage(Component message) {
-        MutableComponent component = Serializer.fromJson(GsonComponentSerializer.gson().serializeToTree(message), RegistryAccess.EMPTY);
-        Objects.requireNonNull(component, "component");
-        super.delegate.sendSystemMessage(component);
-    }
+	@Override
+	public void sendMessage(Component message) {
+		IChatComponent component = IChatComponent.Serializer.jsonToComponent(GsonComponentSerializer.gson().serialize(message));
+		delegate.addChatMessage(component);
+	}
 
-    @Override
-    public boolean hasPermission(String permission) {
-        return this.plugin.hasPermission(this.delegate, permission);
-    }
+	@Override
+	public boolean hasPermission(String permission) {
+		return this.delegate.canCommandSenderUseCommand(3, permission);
+	}
 
-    @Override
-    protected Object getObjectForComparison() {
-        UUID uniqueId = getUniqueId();
-        if (uniqueId != null) {
-            return uniqueId;
-        }
-        Entity entity = this.delegate.getEntity();
-        if (entity != null) {
-            return entity;
-        }
-        return getName();
-    }
+	@Override
+	protected Object getObjectForComparison() {
+		UUID uniqueId = getUniqueId();
+		if (uniqueId != null) {
+			return uniqueId;
+		}
+		Entity entity = this.delegate.getCommandSenderEntity();
+		if (entity != null) {
+			return entity;
+		}
+		return getName();
+	}
 }

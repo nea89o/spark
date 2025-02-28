@@ -20,205 +20,156 @@
 
 package me.lucko.spark.forge;
 
-import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+import com.mojang.realmsclient.util.Pair;
 import me.lucko.spark.common.platform.world.AbstractChunkInfo;
 import me.lucko.spark.common.platform.world.CountMap;
 import me.lucko.spark.common.platform.world.WorldInfoProvider;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.multiplayer.WorldClient;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityList;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.packs.repository.PackRepository;
-import net.minecraft.server.packs.repository.PackSource;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.level.GameRules;
-import net.minecraft.world.level.entity.EntityLookup;
-import net.minecraft.world.level.entity.PersistentEntitySectionManager;
-import net.minecraft.world.level.entity.TransientEntitySectionManager;
+import net.minecraft.world.World;
+import net.minecraft.world.WorldServer;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Map;
 
 public abstract class ForgeWorldInfoProvider implements WorldInfoProvider {
 
-    protected abstract PackRepository getPackRepository();
+	protected void fillLevelChunkEntityCounts(World level, ChunksResult<ForgeChunkInfo> data) {
+		Map<Pair<Integer, Integer>, ForgeChunkInfo> levelInfos = new HashMap<>();
 
-    @Override
-    public Collection<DataPackInfo> pollDataPacks() {
-        return getPackRepository().getSelectedPacks().stream()
-            .map(pack -> new DataPackInfo(
-                    pack.getId(),
-                    pack.getDescription().getString(),
-                    resourcePackSource(pack.getPackSource())
-            ))
-            .collect(Collectors.toList());
-    }
+		for (Entity entity : level.loadedEntityList) {
+			ForgeChunkInfo info = levelInfos.computeIfAbsent(
+				// TODO: pack ints to long
+				Pair.of(entity.chunkCoordX, entity.chunkCoordZ), ForgeChunkInfo::new);
+			info.entityCounts.increment(EntityList.getEntityID(entity));
+		}
 
-    private static String resourcePackSource(PackSource source) {
-        if (source == PackSource.DEFAULT) {
-            return "none";
-        } else if (source == PackSource.BUILT_IN) {
-            return "builtin";
-        } else if (source == PackSource.WORLD) {
-            return "world";
-        } else if (source == PackSource.SERVER) {
-            return "server";
-        } else {
-            return "unknown";
-        }
-    }
+		data.put(level.getWorldInfo().getWorldName(), new ArrayList<>(levelInfos.values()));
+	}
 
-    public static final class Server extends ForgeWorldInfoProvider {
-        private final MinecraftServer server;
+	@Override
+	public Collection<DataPackInfo> pollDataPacks() {
+		return Collections.emptyList();
+	}
 
-        public Server(MinecraftServer server) {
-            this.server = server;
-        }
+	public static final class Server extends ForgeWorldInfoProvider {
+		private final MinecraftServer server;
 
-        @Override
-        public CountsResult pollCounts() {
-            int players = this.server.getPlayerCount();
-            int entities = 0;
-            int chunks = 0;
+		public Server(MinecraftServer server) {
+			this.server = server;
+		}
 
-            for (ServerLevel level : this.server.getAllLevels()) {
-                PersistentEntitySectionManager<Entity> entityManager = level.entityManager;
-                EntityLookup<Entity> entityIndex = entityManager.visibleEntityStorage;
+		@Override
+		public CountsResult pollCounts() {
+			int players = this.server.getCurrentPlayerCount();
+			int entities = 0;
+			int chunks = 0;
+			int tileEntities = 0;
 
-                entities += entityIndex.count();
-                chunks += level.getChunkSource().getLoadedChunksCount();
-            }
+			for (WorldServer level : this.server.worldServers) {
+				entities += level.loadedEntityList.size();
+				chunks += level.theChunkProviderServer.getLoadedChunkCount();
+				tileEntities += level.loadedTileEntityList.size();
+			}
 
-            return new CountsResult(players, entities, -1, chunks);
-        }
+			return new CountsResult(players, entities, tileEntities, chunks);
+		}
 
-        @Override
-        public ChunksResult<ForgeChunkInfo> pollChunks() {
-            ChunksResult<ForgeChunkInfo> data = new ChunksResult<>();
+		@Override
+		public ChunksResult<ForgeChunkInfo> pollChunks() {
+			ChunksResult<ForgeChunkInfo> data = new ChunksResult<>();
 
-            for (ServerLevel level : this.server.getAllLevels()) {
-                Long2ObjectOpenHashMap<ForgeChunkInfo> levelInfos = new Long2ObjectOpenHashMap<>();
+			for (WorldServer level : this.server.worldServers) {
+				fillLevelChunkEntityCounts(level, data);
+			}
 
-                for (Entity entity : level.getEntities().getAll()) {
-                    ForgeChunkInfo info = levelInfos.computeIfAbsent(
-                        entity.chunkPosition().toLong(), ForgeChunkInfo::new);
-                    info.entityCounts.increment(entity.getType());
-                }
+			return data;
+		}
 
-                data.put(level.dimension().location().getPath(), List.copyOf(levelInfos.values()));
-            }
+		@Override
+		public GameRulesResult pollGameRules() {
+			GameRulesResult data = new GameRulesResult();
 
-            return data;
-        }
+			for (WorldServer level : this.server.worldServers) {
+				String levelName = level.getWorldInfo().getWorldName();
 
-        @Override
-        public GameRulesResult pollGameRules() {
-            GameRulesResult data = new GameRulesResult();
-            Iterable<ServerLevel> levels = this.server.getAllLevels();
+				for (String rule : level.getGameRules().getRules()) {
+					data.put(rule, levelName, level.getGameRules().getString(rule));
+				}
+			}
 
-            for (ServerLevel level : levels) {
-                String levelName = level.dimension().location().getPath();
+			return data;
+		}
 
-                level.getGameRules().visitGameRuleTypes(new GameRules.GameRuleTypeVisitor() {
-                    @Override
-                    public <T extends GameRules.Value<T>> void visit(GameRules.Key<T> key, GameRules.Type<T> type) {
-                        String defaultValue = type.createRule().serialize();
-                        data.putDefault(key.getId(), defaultValue);
+	}
 
-                        String value = level.getGameRules().getRule(key).serialize();
-                        data.put(key.getId(), levelName, value);
-                    }
-                });
-            }
+	public static final class Client extends ForgeWorldInfoProvider {
+		private final Minecraft client;
 
-            return data;
-        }
+		public Client(Minecraft client) {
+			this.client = client;
+		}
 
-        @Override
-        protected PackRepository getPackRepository() {
-            return this.server.getPackRepository();
-        }
-    }
+		@Override
+		public CountsResult pollCounts() {
+			WorldClient level = this.client.theWorld;
+			if (level == null) {
+				return null;
+			}
 
-    public static final class Client extends ForgeWorldInfoProvider {
-        private final Minecraft client;
 
-        public Client(Minecraft client) {
-            this.client = client;
-        }
+			int entities = level.loadedEntityList.size();
+			int chunks = level.getChunkProvider().getLoadedChunkCount();
 
-        @Override
-        public CountsResult pollCounts() {
-            ClientLevel level = this.client.level;
-            if (level == null) {
-                return null;
-            }
+			return new CountsResult(-1, entities, -1, chunks);
+		}
 
-            TransientEntitySectionManager<Entity> entityManager = level.entityStorage;
-            EntityLookup<Entity> entityIndex = entityManager.entityStorage;
+		@Override
+		public ChunksResult<ForgeChunkInfo> pollChunks() {
+			WorldClient level = this.client.theWorld;
+			if (level == null) {
+				return null;
+			}
 
-            int entities = entityIndex.count();
-            int chunks = level.getChunkSource().getLoadedChunksCount();
+			ChunksResult<ForgeChunkInfo> data = new ChunksResult<>();
 
-            return new CountsResult(-1, entities, -1, chunks);
-        }
+			fillLevelChunkEntityCounts(level, data);
 
-        @Override
-        public ChunksResult<ForgeChunkInfo> pollChunks() {
-            ClientLevel level = this.client.level;
-            if (level == null) {
-                return null;
-            }
+			return data;
+		}
 
-            ChunksResult<ForgeChunkInfo> data = new ChunksResult<>();
+		@Override
+		public GameRulesResult pollGameRules() {
+			// Not available on client since 24w39a
+			return null;
+		}
+	}
 
-            Long2ObjectOpenHashMap<ForgeChunkInfo> levelInfos = new Long2ObjectOpenHashMap<>();
+	public static final class ForgeChunkInfo extends AbstractChunkInfo<Integer> {
+		private final CountMap<Integer> entityCounts;
 
-            for (Entity entity : level.getEntities().getAll()) {
-                ForgeChunkInfo info = levelInfos.computeIfAbsent(entity.chunkPosition().toLong(), ForgeChunkInfo::new);
-                info.entityCounts.increment(entity.getType());
-            }
+		ForgeChunkInfo(Pair<Integer, Integer> chunkPos) {
+			super(chunkPos.first(), chunkPos.second());
 
-            data.put(level.dimension().location().getPath(), List.copyOf(levelInfos.values()));
+			this.entityCounts = new CountMap.Simple<>(new HashMap<>());
+		}
 
-            return data;
-        }
+		@Override
+		public CountMap<Integer> getEntityCounts() {
+			return this.entityCounts;
+		}
 
-        @Override
-        public GameRulesResult pollGameRules() {
-            // Not available on client since 24w39a
-            return null;
-        }
-
-        @Override
-        protected PackRepository getPackRepository() {
-            return this.client.getResourcePackRepository();
-        }
-    }
-
-    public static final class ForgeChunkInfo extends AbstractChunkInfo<EntityType<?>> {
-        private final CountMap<EntityType<?>> entityCounts;
-
-        ForgeChunkInfo(long chunkPos) {
-            super(ChunkPos.getX(chunkPos), ChunkPos.getZ(chunkPos));
-
-            this.entityCounts = new CountMap.Simple<>(new HashMap<>());
-        }
-
-        @Override
-        public CountMap<EntityType<?>> getEntityCounts() {
-            return this.entityCounts;
-        }
-
-        @Override
-        public String entityTypeName(EntityType<?> type) {
-            return EntityType.getKey(type).toString();
-        }
-    }
+		@Override
+		public String entityTypeName(Integer type) {
+			return EntityList.getStringFromID(type);
+		}
+	}
 
 
 }

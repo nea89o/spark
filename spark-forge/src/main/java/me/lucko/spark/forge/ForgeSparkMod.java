@@ -22,48 +22,44 @@ package me.lucko.spark.forge;
 
 import me.lucko.spark.forge.plugin.ForgeClientSparkPlugin;
 import me.lucko.spark.forge.plugin.ForgeServerSparkPlugin;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.server.ServerAboutToStartEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.IExtensionPoint;
-import net.minecraftforge.fml.ModContainer;
+import me.lucko.spark.forge.plugin.ForgeSparkPlugin;
+import net.minecraft.client.Minecraft;
+import net.minecraft.server.MinecraftServer;
+import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.fml.loading.FMLPaths;
+import net.minecraftforge.fml.common.ModContainer;
+import net.minecraftforge.fml.common.event.FMLInitializationEvent;
+import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 
+import java.io.File;
 import java.nio.file.Path;
 
-@Mod("spark")
+@Mod(modid = "spark", useMetadata = true)
 public class ForgeSparkMod {
 
-    private final ModContainer container;
-    private final Path configDirectory;
+	private ModContainer container;
+	private Path configDirectory;
+	ForgeSparkPlugin plugin;
 
-    public ForgeSparkMod(FMLJavaModLoadingContext ctx) {
-        this.container = ctx.getContainer();
-        this.configDirectory = FMLPaths.CONFIGDIR.get().resolve(this.container.getModId());
+	@Mod.EventHandler
+	public void preInit(FMLPreInitializationEvent event) {
+		container = Loader.instance().activeModContainer();
+		configDirectory = new File(event.getModConfigurationDirectory(), container.getModId()).toPath();
+	}
 
-        ctx.getModEventBus().addListener(this::clientInit);
-        ctx.registerDisplayTest(IExtensionPoint.DisplayTest.IGNORE_ALL_VERSION);
+	@Mod.EventHandler
+	public void init(FMLInitializationEvent event) {
+		plugin = SidedExecutor.executeIf(
+			() -> () -> ForgeClientSparkPlugin.register(this, Minecraft.getMinecraft()),
+			() -> () -> ForgeServerSparkPlugin.register(this, MinecraftServer.getServer())
+		);
+	}
 
-        MinecraftForge.EVENT_BUS.register(this);
-    }
+	public String getVersion() {
+		return this.container.getMetadata().version;
+	}
 
-    public String getVersion() {
-        return this.container.getModInfo().getVersion().toString();
-    }
-
-    public void clientInit(FMLClientSetupEvent e) {
-        ForgeClientSparkPlugin.register(this, e);
-    }
-
-    @SubscribeEvent
-    public void serverInit(ServerAboutToStartEvent e) {
-        ForgeServerSparkPlugin.register(this, e);
-    }
-
-    public Path getConfigDirectory() {
-        return this.configDirectory;
-    }
+	public Path getConfigDirectory() {
+		return this.configDirectory;
+	}
 }

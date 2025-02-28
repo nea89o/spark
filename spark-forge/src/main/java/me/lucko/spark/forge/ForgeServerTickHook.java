@@ -23,23 +23,14 @@ package me.lucko.spark.forge;
 import me.lucko.spark.common.tick.AbstractTickHook;
 import me.lucko.spark.common.tick.TickHook;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.gameevent.TickEvent;
 
-public class ForgeTickHook extends AbstractTickHook implements TickHook {
-    private final TickEvent.Type type;
-
-    public ForgeTickHook(TickEvent.Type type) {
-        this.type = type;
-    }
+public class ForgeServerTickHook extends AbstractTickHook implements TickHook {
 
     @SubscribeEvent
-    public void onTick(TickEvent e) {
+    public void onTick(TickEvent.ServerTickEvent e) {
         if (e.phase != TickEvent.Phase.START) {
-            return;
-        }
-
-        if (e.type != this.type) {
             return;
         }
 
